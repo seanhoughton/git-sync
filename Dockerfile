@@ -2,4 +2,6 @@
 FROM golang:1.6-onbuild
 VOLUME ["/git"]
 ENV GIT_SYNC_DEST /git
-ENTRYPOINT ["/go/bin/git-sync"]
+ADD ./docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"]
