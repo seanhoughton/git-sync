@@ -1,5 +1,11 @@
-#openweb/git-sync:0.0.1
-FROM golang:1.6-onbuild
+FROM golang:1.10 AS build
+WORKDIR /go/src/github.com/seanhoughton/git-sync/
+COPY main.go .
+RUN go build .
+
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates git
+COPY --from=build /go/src/github.com/seanhoughton/git-sync/git-sync /go/bin/git-sync
 VOLUME ["/git"]
 ENV GIT_SYNC_DEST /git
 ADD ./docker-entrypoint.sh /docker-entrypoint.sh

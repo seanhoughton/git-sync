@@ -33,7 +33,7 @@ services:
       - git-sync
     restart: always
   git-sync:
-    image: openweb/git-sync:0.0.1
+    image: seanhoughton/git-sync:latest
     environment:
       GIT_SYNC_REPO: "https://github.com/openweb-nl/website-static.git"
       GIT_SYNC_DEST: "/git"
