@@ -1,8 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
+mkdir -p /root/.ssh
+
 if test -n "${GIT_SYNC_KEY}"; then
-  mkdir -p /root/.ssh
   echo -e "${GIT_SYNC_KEY}" > /root/.ssh/id_rsa
   chmod 0600 /root/.ssh/id_rsa
 fi
