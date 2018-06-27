@@ -10,4 +10,9 @@ fi
 
 echo 'StrictHostKeyChecking no' >> /root/.ssh/config
 
-exec /go/bin/git-sync "$@"
+if [ "$1" = "server" ]; then
+  shift
+  exec /go/bin/git-sync "$@"
+fi
+
+exec "$@"
