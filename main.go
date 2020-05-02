@@ -68,7 +68,8 @@ func main() {
 	}
 	for {
 		if err := syncRepo(*flRepo, *flDest, *flBranch, *flRev); err != nil {
-			log.Fatalf("error syncing repo: %v", err)
+			log.Printf("error syncing repo: %v\n", err)
+
 		}
 		log.Printf("wait %d seconds", *flWait)
 		time.Sleep(time.Duration(*flWait) * time.Second)
