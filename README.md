@@ -52,4 +52,9 @@ Then start the containers with running the following command
 docker-compose up -d
 ```
 
+## Metrics
+
+Prometheus metrics are exposed on port `:9577` path `/metrics` and provide timing and sync error information
+
+
 [kubernetes contrib]: <https://github.com/joemccann/dillinger>

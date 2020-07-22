@@ -22,12 +22,16 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var flRepo = flag.String("repo", envString("GIT_SYNC_REPO", ""), "git repo url")
@@ -35,6 +39,28 @@ var flBranch = flag.String("branch", envString("GIT_SYNC_BRANCH", "master"), "gi
 var flRev = flag.String("rev", envString("GIT_SYNC_REV", "HEAD"), "git rev")
 var flDest = flag.String("dest", envString("GIT_SYNC_DEST", ""), "destination path")
 var flWait = flag.Int("wait", envInt("GIT_SYNC_WAIT", 0), "number of seconds to wait before exit")
+
+var metricSyncTime = prometheus.NewHistogram(prometheus.HistogramOpts{
+	Name:    "gitsync_sync_time",
+	Help:    "Sync time distributions.",
+	Buckets: prometheus.ExponentialBuckets(0.01, 2, 12),
+})
+
+var metricSyncCount = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "gitsync_sync_count",
+	Help: "Number of syncs",
+})
+
+var metricErrorCount = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "gitsync_error_count",
+	Help: "Number of errors that have occurred",
+})
+
+func init() {
+	prometheus.MustRegister(metricSyncTime)
+	prometheus.MustRegister(metricSyncCount)
+	prometheus.MustRegister(metricErrorCount)
+}
 
 func envString(key, def string) string {
 	if env := os.Getenv(key); env != "" {
@@ -57,6 +83,11 @@ func envInt(key string, def int) int {
 
 const usage = "usage: GIT_SYNC_REPO= GIT_SYNC_DEST= [GIT_SYNC_BRANCH= GIT_SYNC_WAIT=] git-sync -repo GIT_REPO_URL -dest PATH [-branch -wait]"
 
+func startMetrics() {
+	http.Handle("/metrics", promhttp.Handler())
+	go http.ListenAndServe(":9577", nil)
+}
+
 func main() {
 	flag.Parse()
 	if *flRepo == "" || *flDest == "" {
@@ -66,10 +97,17 @@ func main() {
 	if _, err := exec.LookPath("git"); err != nil {
 		log.Fatalf("required git executable not found: %v", err)
 	}
+
+	startMetrics()
+
 	for {
+		startTime := time.Now()
 		if err := syncRepo(*flRepo, *flDest, *flBranch, *flRev); err != nil {
 			log.Printf("error syncing repo: %v\n", err)
-
+			metricErrorCount.Inc()
+		} else {
+			metricSyncCount.Inc()
+			metricSyncTime.Observe(time.Since(startTime).Seconds())
 		}
 		log.Printf("wait %d seconds", *flWait)
 		time.Sleep(time.Duration(*flWait) * time.Second)
