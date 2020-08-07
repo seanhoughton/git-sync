@@ -1,9 +1,9 @@
-FROM golang:1.14 AS build
+FROM golang:1.14.7-alpine3.12 AS build
 WORKDIR /go/src/github.com/seanhoughton/git-sync/
 COPY go.mod go.sum main.go ./
 RUN go build .
 
-FROM alpine:latest
+FROM alpine:3.12
 RUN apk --no-cache add \
 	ca-certificates \
 	git \
